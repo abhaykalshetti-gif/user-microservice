@@ -95,7 +95,7 @@ export class CohortMembersService {
         cohortId,
         cohortAcademicyearId
       );
-      if (userDetails === true) { 
+      if (userDetails === true) {
         const results = {
           userDetails: [],
         };
@@ -561,7 +561,16 @@ ON CM."userId" = U."userId" ${whereCase}`;
       const savedCohortMember = await this.cohortMembersRepository.save(
         cohortMembers
       );
+      const enrichedCohortMember = {
+        ...savedCohortMember,
+        AcademicYearID: academicyearId,
+      };
 
+      await this.publishCohortMemberEvent(
+        "created",
+        enrichedCohortMember,
+        apiId
+      );
       return APIResponse.success(
         res,
         apiId,
@@ -752,10 +761,10 @@ ${whereCase}`;
         cohortMembershipToUpdate
       );
       await this.publishCohortMemberEvent(
-            "updated",
-            cohortMembershipToUpdate,
-            apiId
-          );
+        "updated",
+        cohortMembershipToUpdate,
+        apiId
+      );
       if (!result) {
         return APIResponse.error(
           res,
@@ -1090,7 +1099,7 @@ ${whereCase}`;
               cohortMemberForAcademicYear
             );
             results.push(result);
-            
+
             // Track user for Kafka event publishing
             affectedUsers.add(userId);
           } catch (error) {
@@ -1143,7 +1152,7 @@ ${whereCase}`;
     });
 
     await Promise.allSettled(publishPromises);
-    
+
     if (errors.length > 0) {
       return APIResponse.success(
         response,
@@ -1229,7 +1238,7 @@ ${whereCase}`;
 
       if (eventType === "deleted") {
         cohortMemberData = {
-          cohortMembershipId : cohortMembershipToUpdate.cohortMembershipId,
+          cohortMembershipId: cohortMembershipToUpdate.cohortMembershipId,
           deletedAt: new Date().toISOString(),
         };
       } else {
@@ -1257,16 +1266,16 @@ ${whereCase}`;
                 f?.value ??
                 (Array.isArray(f?.selectedValues)
                   ? f.selectedValues
-                      .map(
-                        (v: any) =>
-                          v?.value ??
-                          v?.label ??
-                          v?.name ??
-                          v?.id ??
-                          (typeof v === "string" ? v : null)
-                      )
-                      .filter((v: any) => v != null)
-                      .join(",")
+                    .map(
+                      (v: any) =>
+                        v?.value ??
+                        v?.label ??
+                        v?.name ??
+                        v?.id ??
+                        (typeof v === "string" ? v : null)
+                    )
+                    .filter((v: any) => v != null)
+                    .join(",")
                   : null),
             }));
         } catch (cfError) {
@@ -1278,7 +1287,7 @@ ${whereCase}`;
         }
 
         cohortMemberData = {
-          cohortMembershipId : cohortMembershipToUpdate.cohortMembershipId,
+          cohortMembershipId: cohortMembershipToUpdate.cohortMembershipId,
           customFields: membershipCustomFields,
           eventTimestamp: new Date().toISOString(),
         };
