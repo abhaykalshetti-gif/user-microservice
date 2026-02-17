@@ -1100,6 +1100,18 @@ ${whereCase}`;
             );
             results.push(result);
 
+            const enrichedCohortMember = {
+              ...result,
+              AcademicYearID: academicyearId,
+              customFields: (cohortMembersDto as any).customFields,
+            };
+
+            await this.publishCohortMemberEvent(
+              "created",
+              enrichedCohortMember,
+              apiId
+            );
+
             // Track user for Kafka event publishing
             affectedUsers.add(userId);
           } catch (error) {
