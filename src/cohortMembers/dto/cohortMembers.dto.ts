@@ -1,6 +1,7 @@
-import { Expose } from "class-transformer";
+import { Expose, Type } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsUUID } from "class-validator";
+import { IsNotEmpty, IsOptional, IsUUID, ValidateNested } from "class-validator";
+import { FieldValuesOptionDto } from "../../user/dto/user-create.dto";
 
 export class CohortMembersDto {
   //generated fields
@@ -48,6 +49,16 @@ export class CohortMembersDto {
   @IsNotEmpty()
   @IsUUID(undefined, { message: "User Id must be a valid UUID" })
   userId: string;
+
+  @ApiProperty({
+    type: [FieldValuesOptionDto],
+    description: "Array of Custom fields",
+  })
+  @Expose()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => FieldValuesOptionDto)
+  customFields?: FieldValuesOptionDto[];
 
   constructor(obj: any) {
     Object.assign(this, obj);
