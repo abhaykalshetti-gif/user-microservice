@@ -1,6 +1,6 @@
 import {
-  BadRequestException, Headers,Body, Controller,
-  Get,
+  BadRequestException, Headers, Body, Controller,
+  Get, Param, Patch,
   Post, Query,
   Req,
   Res,
@@ -19,6 +19,7 @@ import {
 } from "@nestjs/swagger";
 import { AllExceptionsFilter } from 'src/common/filters/exception.filter';
 import { FormCreateDto } from './dto/form-create.dto';
+import { FormUpdateDto } from './dto/form-update.dto';
 import { APIID } from '@utils/api-id.config';
 import { isUUID } from 'class-validator';
 import { API_RESPONSES } from '@utils/response.messages';
@@ -83,5 +84,32 @@ export class FormsController {
     }
     formCreateDto.tenantId = tenantId;
     return await this.formsService.createForm(request,formCreateDto,response);
+  }
+
+  @UseFilters(new AllExceptionsFilter(APIID.FORM_UPDATE))
+  @Patch("/update/:formId")
+  @ApiBasicAuth("access-token")
+  @ApiCreatedResponse({ description: "Form has been updated successfully." })
+  @ApiBadRequestResponse({ description: "Bad request." })
+  @ApiInternalServerErrorResponse({ description: "Internal Server Error." })
+  @UsePipes(new ValidationPipe())
+  @ApiBody({ type: FormUpdateDto })
+  @ApiHeader({
+    name: "tenantid",
+  })
+  public async updateForm(
+    @Param("formId") formId: string,
+    @Headers() headers,
+    @Req() request: Request,
+    @Body() formUpdateDto: FormUpdateDto,
+    @Res() response: Response,
+    @GetUserId("userId", ParseUUIDPipe) userId: string,
+  ) {
+    let tenantId = headers["tenantid"];
+    if (tenantId && !isUUID(tenantId)) {
+      throw new BadRequestException(API_RESPONSES.TENANTID_VALIDATION);
+    }
+    formUpdateDto.updatedBy = userId;
+    return await this.formsService.updateForm(formId, request, formUpdateDto, response);
   }
 }

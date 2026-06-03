@@ -591,7 +591,9 @@ export class FieldsService {
       //Update data in field params
       if (
         getSourceDetails.sourceDetails &&
-        getSourceDetails.sourceDetails.source == "fieldparams"
+        getSourceDetails.sourceDetails.source == "fieldparams" &&
+        fieldsData.fieldParams &&
+        fieldsData.fieldParams.options
       ) {
         for (const sourceFieldName of fieldsData.fieldParams.options) {
           //Store those fields is depends on another fields but did not provide controlling field foreign key

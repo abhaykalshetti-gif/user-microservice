@@ -7,6 +7,7 @@ import { FieldsService } from "../fields/fields.service";
 import APIResponse from "src/common/responses/response";
 import { CohortContextType } from "./utils/form-class";
 import { FormCreateDto } from "./dto/form-create.dto";
+import { FormUpdateDto } from "./dto/form-update.dto";
 import { APIID } from "@utils/api-id.config";
 import { API_RESPONSES } from "@utils/response.messages";
 import { ConfigService } from "@nestjs/config";
@@ -297,6 +298,98 @@ export class FormsService {
     }
   }
 
+  public async updateForm(formId: string, request, formUpdateDto: FormUpdateDto, response) {
+    let apiId = APIID.FORM_UPDATE;
+
+    try {
+      const existingForm = await this.formRepository.findOne({
+        where: { formid: formId },
+      });
+
+      if (!existingForm) {
+        return APIResponse.error(
+          response,
+          apiId,
+          "NOT_FOUND",
+          API_RESPONSES.FORM_NOT_FOUND,
+          HttpStatus.NOT_FOUND
+        );
+      }
+
+      if (formUpdateDto.contextType) {
+        formUpdateDto.contextType = formUpdateDto.contextType.toUpperCase();
+      }
+      if (formUpdateDto.context) {
+        formUpdateDto.context = formUpdateDto.context.toUpperCase();
+      }
+      if (formUpdateDto.title) {
+        formUpdateDto.title = formUpdateDto.title.toUpperCase();
+      }
+      if (formUpdateDto.fields) {
+        const validForm = await this.validateFormFields(
+          formUpdateDto.fields?.result
+        );
+        if (!validForm) {
+          return APIResponse.error(
+            response,
+            apiId,
+            "BAD_REQUEST",
+            API_RESPONSES.INVALID_FORM,
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+
+      const context = formUpdateDto.context || existingForm.context;
+      const contextType = formUpdateDto.contextType || existingForm.contextType;
+
+      if (formUpdateDto.context || formUpdateDto.contextType) {
+        const validContextTypes = await this.getValidContextTypes(context);
+        if (validContextTypes.length === 0) {
+          return APIResponse.error(
+            response,
+            apiId,
+            "BAD_REQUEST",
+            API_RESPONSES.INVALID_CONTEXT(context),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+        if (contextType && !validContextTypes.includes(contextType)) {
+          return APIResponse.error(
+            response,
+            apiId,
+            "BAD_REQUEST",
+            API_RESPONSES.INVALID_CONTEXTTYPE(context, validContextTypes.join(", ")),
+            HttpStatus.BAD_REQUEST
+          );
+        }
+      }
+
+      await this.formRepository.update(formId, formUpdateDto);
+
+      const updatedForm = await this.formRepository.findOne({
+        where: { formid: formId },
+      });
+
+      return APIResponse.success(
+        response,
+        apiId,
+        updatedForm,
+        HttpStatus.OK,
+        API_RESPONSES.FORM_UPDATED_SUCCESSFULLY
+      );
+    } catch (error) {
+      const errorMessage = error.message || "Internal server error";
+      return APIResponse.error(
+        response,
+        apiId,
+        "INTERNAL_SERVER_ERROR",
+        errorMessage,
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   private async validateFormFields(formFields) {
     const fieldIds = [];
     if (Array.isArray(formFields)) {
@@ -305,7 +398,7 @@ export class FormsService {
           fieldIds.push(element["fieldId"]);
         } else if (
           (element["coreField"] === 0 && !element["fieldId"]) ||
-          (element["coreField"] === 1 && element["fieldId"] !== null)
+          (element["coreField"] === 1 && element["fieldId"] != null)
         ) {
           return false;
         }
