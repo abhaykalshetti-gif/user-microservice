@@ -84,7 +84,7 @@
   "devDependencies": {
     "@eslint/config-array": "^0.23.0",
     "@eslint/object-schema": "^3.0.0",
-    "@nestjs/cli": "^11.0.14",
+    "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^10.1.4",
     "@nestjs/testing": "^11.1.9",
     "@types/cron": "^1.7.3",
