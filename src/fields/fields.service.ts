@@ -497,13 +497,14 @@ export class FieldsService {
       let error = "";
 
       Object.keys(fieldsUpdateDto).forEach((e) => {
-        if (fieldsUpdateDto[e] && fieldsUpdateDto[e] !== "") {
+        const value = fieldsUpdateDto[e];
+        if (value !== undefined && value !== null && value !== "") {
           if (e === "render") {
-            fieldsData[e] = fieldsUpdateDto[e];
-          } else if (Array.isArray(fieldsUpdateDto[e])) {
-            fieldsData[e] = JSON.stringify(fieldsUpdateDto[e]);
+            fieldsData[e] = value;
+          } else if (Array.isArray(value)) {
+            fieldsData[e] = JSON.stringify(value);
           } else {
-            fieldsData[e] = fieldsUpdateDto[e];
+            fieldsData[e] = value;
           }
         }
       });
