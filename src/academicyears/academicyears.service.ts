@@ -118,7 +118,7 @@ export class AcademicYearService {
     tenantId: string
   ): Promise<AcademicYear> {
     return await this.academicYearRespository.findOne({
-      where: { id: academicYearId, isActive: true, tenantId },
+      where: { id: academicYearId, tenantId },
     });
   }
 

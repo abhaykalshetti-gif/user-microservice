@@ -3558,7 +3558,7 @@ export class UserService {
                 LEFT JOIN (
                   SELECT cay."cohortAcademicYearId", cay."cohortId", cay."academicYearId"
                   FROM public."CohortAcademicYear" cay
-                  INNER JOIN public."AcademicYears" ay_filter ON cay."academicYearId" = ay_filter."id" AND ay_filter."isActive" = true
+                  INNER JOIN public."AcademicYears" ay_filter ON cay."academicYearId" = ay_filter."id" AND ay_filter."id" = '99f6b96d-75cc-43eb-9ead-aad712dfa856'
                 ) cay ON (
                   CASE WHEN bd."batchType" = 'BATCH' THEN bd."cohortId"::uuid ELSE bd."batchId"::uuid END
                 ) = cay."cohortId"
