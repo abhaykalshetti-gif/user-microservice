@@ -20,6 +20,9 @@ import { DeleteAssignRoleDto } from "src/rbac/assign-role/dto/delete-assign-role
 import { Response, Request } from "express";
 import { APIID } from "src/common/utils/api-id.config";
 import APIResponse from "src/common/responses/response";
+import { UserTenantMappingService } from "src/userTenantMapping/user-tenant-mapping.service";
+import { LoggerUtil } from "src/common/logger/LoggerUtil";
+import { API_RESPONSES } from "src/common/utils/response.messages";
 
 @Injectable()
 export class AssignRoleService {
@@ -27,7 +30,8 @@ export class AssignRoleService {
     @InjectRepository(UserRoleMapping)
     private userRoleMappingRepository: Repository<UserRoleMapping>,
     @InjectRepository(Role)
-    private roleRepository: Repository<Role>
+    private roleRepository: Repository<Role>,
+    private userTenantMappingService: UserTenantMappingService
   ) { }
   public async createAssignRole(
     request: any,
@@ -209,14 +213,15 @@ export class AssignRoleService {
             apiId,
             `Invalid roleId format. Please provide valid UUIDs`,
             "Invalid UUID",
-            HttpStatus.BAD_REQUEST
+            HttpStatus.BAD_REQUEST  
           );
         }
       }
-      // Check if the userId exists in userRoleMapping table
+    // Check if the userId exists in userRoleMapping table
       const userExists = await this.userRoleMappingRepository.findOne({
         where: { userId: deleteAssignRoleDto.userId },
       });
+      console.log("userExists", userExists);
       if (!userExists) {
         return APIResponse.error(
           res,
@@ -231,9 +236,11 @@ export class AssignRoleService {
         where: {
           userId: deleteAssignRoleDto.userId,
           roleId: In(deleteAssignRoleDto.roleId),
+          tenantId: userExists.tenantId, // Ensure the role belongs to the same tenant as the user
         },
       });
       // If any roleId(s) are missing, throw an error
+      console.log(roleExists.length ," " , deleteAssignRoleDto.roleId.length);
       if (roleExists.length !== deleteAssignRoleDto.roleId.length) {
         return APIResponse.error(
           res,
@@ -248,6 +255,22 @@ export class AssignRoleService {
         userId: deleteAssignRoleDto.userId,
         roleId: In(deleteAssignRoleDto.roleId),
       });
+
+      // Publish user-tenant deleted event to Kafka asynchronously for each affected tenant - after response is sent to client
+      const affectedTenantIds = [...new Set(roleExists.map((mapping) => mapping.tenantId))];
+      for (const tenantId of affectedTenantIds) {
+        this.userTenantMappingService
+          .publishUserTenantMappingEvent('deleted', deleteAssignRoleDto.userId, tenantId, apiId)
+          .catch((error) =>
+            LoggerUtil.error(
+              API_RESPONSES.ERROR_FAILED_PUBLISH_USER_TENANT_EVENT('deleted'),
+              `Error: ${error.message}`,
+              apiId,
+              deleteAssignRoleDto.userId
+            )
+          );
+      }
+
       return APIResponse.success(
         res,
         apiId,
