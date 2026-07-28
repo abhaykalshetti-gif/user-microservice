@@ -8,25 +8,14 @@ import {
   IsEnum,
   IsOptional,
   ValidateNested,
-  IsBoolean,
   IsObject,
   ValidateIf,
-  IsDefined,
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { FieldType } from "../entities/fields.entity";
 import { Type } from "class-transformer";
 
 class FieldParams {
-  @ApiPropertyOptional({
-    type: Boolean,
-    description: "Specifies if the field can be created",
-    default: false,
-  })
-  @IsBoolean()
-  @IsDefined() // Ensures this field is required
-  isCreate: boolean;
-
   @ApiPropertyOptional({
     type: Array,
     description: "Options for the field",

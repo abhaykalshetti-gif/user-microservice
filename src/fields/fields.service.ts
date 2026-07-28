@@ -542,20 +542,8 @@ export class FieldsService {
             query
           );
 
-          //If code is not exist in db
+          //If code does not exist in db, create the record
           if (checkSourceData.length === 0) {
-            //If code is not exist in db and isCreate flag is false
-            if (!fieldsData.fieldParams.isCreate) {
-              return APIResponse.error(
-                response,
-                apiId,
-                "BAD_REQUEST",
-                `Error: This code '${sourceFieldName["value"]}' does not exist in the '${getSourceDetails.sourceDetails.table}' table.`,
-                HttpStatus.BAD_REQUEST
-              );
-            }
-
-            // If not exist and isCreate is true, create the record
             await this.createSourceDetailsTableFields(
               getSourceDetails.sourceDetails.table,
               sourceFieldName["name"],
@@ -565,18 +553,7 @@ export class FieldsService {
               getSourceDetails.dependsOn
             );
           } else {
-            //If code is exist in db and isCreate flag is true
-            if (fieldsData.fieldParams.isCreate) {
-              return APIResponse.error(
-                response,
-                apiId,
-                "CONFLICT",
-                `Error: This code '${sourceFieldName["value"]}' already exists for '${checkSourceData[0].name}' in the '${getSourceDetails.sourceDetails.table}' table.`,
-                HttpStatus.CONFLICT
-              );
-            }
-
-            // If exist and isCreate is false, update the record
+            // If code exists in db, update the record
             await this.updateSourceDetailsTableFields(
               getSourceDetails.sourceDetails.table,
               sourceFieldName["name"],
@@ -589,45 +566,7 @@ export class FieldsService {
         delete fieldsData.fieldParams;
       }
 
-      //Update data in field params
-      if (
-        getSourceDetails.sourceDetails &&
-        getSourceDetails.sourceDetails.source == "fieldparams" &&
-        fieldsData.fieldParams &&
-        fieldsData.fieldParams.options
-      ) {
-        for (const sourceFieldName of fieldsData.fieldParams.options) {
-          //Store those fields is depends on another fields but did not provide controlling field foreign key
-          if (
-            fieldsData.dependsOn &&
-            (!sourceFieldName["controllingfieldfk"] ||
-              sourceFieldName["controllingfieldfk"] === "")
-          ) {
-            storeWithoutControllingField.push(sourceFieldName["name"]);
-          }
 
-          // check options exits in fieldParams column or not
-          const query = `SELECT COUNT(*) FROM public."Fields" WHERE "fieldId"='${fieldId}' AND "fieldParams" -> 'options' @> '[{"value": "${sourceFieldName["value"]}"}]' `;
-          const checkSourceData = await this.fieldsRepository.query(query);
-
-          //If fields is not present then create a new options
-          if (checkSourceData[0].count == 0) {
-            const addFieldParamsValue = await this.addOptionsInFieldParams(
-              fieldId,
-              sourceFieldName
-            );
-            if (addFieldParamsValue !== true) {
-              return APIResponse.error(
-                response,
-                apiId,
-                "Internal Server Error",
-                `Error : ${addFieldParamsValue}`,
-                HttpStatus.INTERNAL_SERVER_ERROR
-              );
-            }
-          }
-        }
-      }
 
       //If fields is depends on another fields but did not provide controlling field foreign key
       if (storeWithoutControllingField.length > 0) {
@@ -1235,7 +1174,7 @@ export class FieldsService {
           let foreignKeys = controllingfieldfk.toString();
           whereClause = `"${fetchFieldParams?.dependsOn}_id" IN(${foreignKeys})`;
         }
-        
+
         dynamicOptions = await this.findDynamicOptions(
           fieldName,
           whereClause,
@@ -1519,8 +1458,8 @@ export class FieldsService {
       condition.contextType = IsNull();
     }
 
-    const customFields = await this.fieldsRepository.find({ where: [condition, {context: IsNull(), contextType: IsNull()}] });
-    
+    const customFields = await this.fieldsRepository.find({ where: [condition, { context: IsNull(), contextType: IsNull() }] });
+
     return customFields;
   }
 
@@ -1544,7 +1483,7 @@ export class FieldsService {
   async filterUserUsingCustomFieldsOptimized(context: string, stateDistBlockData: any) {
     let joinCond = "";
     let targetTable = "";
-    
+
     if (context === "COHORT") {
       joinCond = `JOIN "Cohort" u ON fv."itemId" = u."cohortId"`;
       targetTable = "Cohort";
@@ -1563,11 +1502,11 @@ export class FieldsService {
 
     for (const [fieldName, fieldValues] of Object.entries(stateDistBlockData)) {
       const values = Array.isArray(fieldValues) ? fieldValues : [fieldValues];
-      
+
       // Create placeholders for parameterized query
       const valuePlaceholders = values.map(() => `$${paramIndex++}`);
       queryParams.push(...values);
-      
+
       const condition = `
         EXISTS (
           SELECT 1 
@@ -1578,7 +1517,7 @@ export class FieldsService {
             AND (f_inner.context IN($${paramIndex + 1}, 'NULL', 'null', '') OR f_inner.context IS NULL)
             AND fv_inner."value" && ARRAY[${valuePlaceholders.join(',')}]
         )`;
-      
+
       queryParams.push(fieldName, context);
       paramIndex += 2;
       conditions.push(condition);
@@ -1726,7 +1665,7 @@ export class FieldsService {
           SELECT * 
           FROM "public"."Fields" 
           WHERE "fieldAttributes"->>'isEditable' = $1; 
-        `;        
+        `;
     const getFieldsAttributesParams = ["true"];
     return await this.fieldsRepository.query(
       getFieldsAttributesQuery,
@@ -1768,7 +1707,7 @@ export class FieldsService {
     if (!Array.isArray(data.value)) {
       data.value = [data.value];
     }
-  
+
     const result = await this.fieldsValuesRepository.insert({
       itemId,
       fieldId: data.fieldId,
@@ -1778,7 +1717,7 @@ export class FieldsService {
       createdBy: additionalData.createdBy,
       updatedBy: additionalData.updatedBy,
     });
-  
+
     return {
       ...result,
       correctValue: true,
@@ -1790,14 +1729,14 @@ export class FieldsService {
     if (tenantId) {
       whereCondition.tenantId = tenantId;
     }
-    
+
     const response = await this.fieldsRepository.findOne({
       where: whereCondition,
       select: ['fieldId']
     });
     return response?.fieldId || null;
   }
-  
+
   validateFieldValue(field: any, value: any) {
     try {
       const fieldInstance = FieldFactory.createField(
@@ -1948,7 +1887,7 @@ export class FieldsService {
               value: data[nameField],
             }));
           } else if (data.sourceDetails?.externalsource) {
-              processedValue = data?.value
+            processedValue = data?.value
           }
         } else {
           // Parse JSON values if the field type is json
@@ -2004,7 +1943,7 @@ export class FieldsService {
       joinCond = `fv."itemId" = u."cohortId"`;
     }
 
-    
+
     try {
       // Single query to fetch all custom fields for all items
       const query = `
@@ -2113,7 +2052,7 @@ export class FieldsService {
 
       // Group by itemId
       const groupedByItemId: Record<string, any[]> = {};
-      
+
       // Initialize all itemIds with empty arrays
       itemIds.forEach(itemId => {
         groupedByItemId[itemId] = [];
