@@ -98,10 +98,15 @@ export class AssignRoleController {
   @ApiBadRequestResponse({ description: "Bad request" })
   public async deleteRole(
     @Body() deleteAssignRoleDto: DeleteAssignRoleDto, // Modify this line to accept DeleteAssignRoleDto
+    @Headers() headers,
     @Res() response: Response
   ) {
-    return await this.assignRoleService
-      .deleteAssignedRole(deleteAssignRoleDto, response);
+     const tenantId = headers["tenantid"];
+    if (!tenantId) {
+      throw new BadRequestException("Tenant ID is required.");
+    }
+       return await this.assignRoleService
+      .deleteAssignedRole(deleteAssignRoleDto, tenantId, response);
   }
 
   @UseFilters(new AllExceptionsFilter(APIID.USERROLE_BULK_UPDATE))

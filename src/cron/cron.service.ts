@@ -354,8 +354,9 @@ export class CronService {
                   try {
                     await this.userTenantMappingService.publishUserTenantMappingEvent(
                       'updated_status',
-                      user.userId,
-                      tenantId,
+                      {
+                        userId: user.userId,
+                        tenantId: tenantId},
                       this.apiId
                     );
                   } catch (kafkaError) {
@@ -519,8 +520,7 @@ export class CronService {
           try {
             await this.userTenantMappingService.publishUserTenantMappingEvent(
               'created',
-              user.userId,
-              pragyanpathTenantId,
+             { userId: user.userId, tenantId: pragyanpathTenantId },
               this.pragyanpathApiId
             );
           } catch (kafkaError) {

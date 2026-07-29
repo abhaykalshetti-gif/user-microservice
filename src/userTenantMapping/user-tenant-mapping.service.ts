@@ -227,7 +227,7 @@ export class UserTenantMappingService {
       );
 
       // Publish user-tenant mapping event to Kafka asynchronously - after response is sent to client
-      this.publishUserTenantMappingEvent('created', userId, tenantId, apiId)
+      this.publishUserTenantMappingEvent('created', result, apiId)
         .catch(error => LoggerUtil.error(
           API_RESPONSES.ERROR_FAILED_PUBLISH_USER_TENANT_CREATED(userId),
           `Error: ${error.message}`,
@@ -396,7 +396,7 @@ export class UserTenantMappingService {
       );
 
       // Publish user-tenant status update event to Kafka asynchronously - after response is sent to client
-      this.publishUserTenantMappingEvent('updated_status', userId, tenantId, apiId)
+      this.publishUserTenantMappingEvent('updated_status', result, apiId)
         .catch(error => LoggerUtil.error(
           API_RESPONSES.ERROR_FAILED_PUBLISH_USER_TENANT_UPDATED(userId),
           `Error: ${error.message}`,
@@ -432,8 +432,7 @@ export class UserTenantMappingService {
    */
   public async publishUserTenantMappingEvent(
     eventType: 'created' | 'updated_status' | 'deleted',
-    userId: string,
-    tenantId: string,
+    data: any,
     apiId: string
   ): Promise<void> {
     try {
@@ -442,25 +441,26 @@ export class UserTenantMappingService {
 
       if (eventType === 'deleted') {
         userTenantData = {
-          userId: userId,
-          tenantId: tenantId,
+          userId: data.userId,
+          tenantId: data.tenantId,
+          roleId: data.roleId,
           deletedAt: new Date().toISOString()
         };
       } else if (eventType === 'updated_status') {
         // For USER_TENANT_STATUS_UPDATE, fetch only UserTenantMapping table data
         try {
           const mapping = await this.userTenantMappingRepository.findOne({
-            where: { userId, tenantId },
+            where: { userId: data.userId, tenantId: data.tenantId },
             select: ["Id", "userId", "tenantId", "status", "reason", "createdAt", "updatedAt", "createdBy", "updatedBy"]
           });
 
           if (!mapping) {
             LoggerUtil.error(
               API_RESPONSES.ERROR_FAILED_FETCH_MAPPING_DATA,
-              `Mapping not found for userId: ${userId}, tenantId: ${tenantId}`,
+              `Mapping not found for userId: ${data.userId}, tenantId: ${data.tenantId}`,
               apiId
             );
-            userTenantData = { userId, tenantId };
+            userTenantData = { userId: data.userId, tenantId: data.tenantId };
           } else {
             // Build the user-tenant data object with only UserTenantMapping table fields
             userTenantData = {
@@ -482,39 +482,39 @@ export class UserTenantMappingService {
             apiId
           );
           // Return at least the userId and tenantId if we can't fetch complete data
-          userTenantData = { userId, tenantId };
+          userTenantData = { userId: data.userId, tenantId: data.tenantId };
         }
       } else {
         // For create events (USER_TENANT_MAPPING), fetch complete data from DB
         try {
           // Fetch user-tenant mapping data
           const mapping = await this.userTenantMappingRepository.findOne({
-            where: { userId, tenantId },
+            where: { userId: data.userId, tenantId: data.tenantId },
           });
 
           if (!mapping) {
             LoggerUtil.error(
               API_RESPONSES.ERROR_FAILED_FETCH_MAPPING_DATA,
-              `Mapping not found for userId: ${userId}, tenantId: ${tenantId}`,
+              `Mapping not found for userId: ${data.userId}, tenantId: ${data.tenantId}`,
               apiId
             );
-            userTenantData = { userId, tenantId };
+            userTenantData = { userId: data.userId, tenantId: data.tenantId };
           } else {
             // Get user information
             const user = await this.userRepository.findOne({
-              where: { userId },
+              where: { userId: data.userId },
               select: ["userId", "username", "firstName", "lastName","middleName", "email", "mobile"]
             });
 
             // Get tenant information
             const tenant = await this.tenantsRepository.findOne({
-              where: { tenantId },
+              where: { tenantId: data.tenantId },
               select: ["tenantId", "name", "domain"]
             });
 
             // Get role information for this user in this tenant
             const userRoleMapping = await this.userRoleMappingRepository.findOne({
-              where: { userId, tenantId }
+              where: { userId: data.userId, tenantId: data.tenantId }
             });
 
             let roleInfo = null;
@@ -534,7 +534,7 @@ export class UserTenantMappingService {
             // Get custom fields for this user-tenant mapping
             let customFields = [];
             try {
-              customFields = await this.fieldsService.getCustomFieldDetails(userId, 'Users');
+              customFields = await this.fieldsService.getCustomFieldDetails(data.userId, 'Users');
             } catch (error) {
               LoggerUtil.error(
                 API_RESPONSES.ERROR_FAILED_FETCH_CUSTOM_FIELDS,
@@ -576,12 +576,12 @@ export class UserTenantMappingService {
             apiId
           );
           // Return at least the userId and tenantId if we can't fetch complete data
-          userTenantData = { userId, tenantId };
+          userTenantData = { userId: data.userId, tenantId: data.tenantId };
         }
       }
-      await this.kafkaService.publishUserTenantEvent(eventType, userTenantData, userId);
+      await this.kafkaService.publishUserTenantEvent(eventType, userTenantData, data.userId);
       LoggerUtil.log(
-        API_RESPONSES.LOG_USER_TENANT_EVENT_PUBLISHED(eventType, userId, tenantId),
+        API_RESPONSES.LOG_USER_TENANT_EVENT_PUBLISHED(eventType, data.userId, data.tenantId),
         apiId
       );
     } catch (error) {

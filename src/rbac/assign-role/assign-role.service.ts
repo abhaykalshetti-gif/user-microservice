@@ -191,6 +191,7 @@ export class AssignRoleService {
 
   public async deleteAssignedRole(
     deleteAssignRoleDto: DeleteAssignRoleDto,
+    tenantId: string,
     res: Response
   ) {
     const apiId = APIID.USERROLE_DELETE;
@@ -236,7 +237,7 @@ export class AssignRoleService {
         where: {
           userId: deleteAssignRoleDto.userId,
           roleId: In(deleteAssignRoleDto.roleId),
-          tenantId: userExists.tenantId, // Ensure the role belongs to the same tenant as the user
+          tenantId: tenantId, // Ensure the role belongs to the same tenant as the user
         },
       });
       // If any roleId(s) are missing, throw an error
@@ -254,13 +255,12 @@ export class AssignRoleService {
       const response = await this.userRoleMappingRepository.delete({
         userId: deleteAssignRoleDto.userId,
         roleId: In(deleteAssignRoleDto.roleId),
+        tenantId: tenantId, // Ensure the role belongs to the same tenant as the user
       });
 
       // Publish user-tenant deleted event to Kafka asynchronously for each affected tenant - after response is sent to client
-      const affectedTenantIds = [...new Set(roleExists.map((mapping) => mapping.tenantId))];
-      for (const tenantId of affectedTenantIds) {
-        this.userTenantMappingService
-          .publishUserTenantMappingEvent('deleted', deleteAssignRoleDto.userId, tenantId, apiId)
+     await this.userTenantMappingService
+          .publishUserTenantMappingEvent('deleted',roleExists,  apiId)
           .catch((error) =>
             LoggerUtil.error(
               API_RESPONSES.ERROR_FAILED_PUBLISH_USER_TENANT_EVENT('deleted'),
@@ -269,7 +269,6 @@ export class AssignRoleService {
               deleteAssignRoleDto.userId
             )
           );
-      }
 
       return APIResponse.success(
         res,
