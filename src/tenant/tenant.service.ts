@@ -13,7 +13,6 @@ import { TenantCreateDto } from './dto/tenant-create.dto';
 import { CacheService } from '../cache/cache.service';
 import { hashCacheKey } from '../cache/cache-key.util';
 
-const TENANT_TTL_SECONDS = 3600; // tenant, 1 h
 
 @Injectable()
 export class TenantService {
@@ -27,7 +26,6 @@ export class TenantService {
         const payload = await this.cacheService.getOrLoad({
             namespace: "tenant",
             key: "read:all",
-            ttlSeconds: TENANT_TTL_SECONDS,
             loader: async () => {
                 const result = await this.getTenantsData(request, response);
                 return response.headersSent ? null : result;
@@ -159,7 +157,6 @@ export class TenantService {
         const payload = await this.cacheService.getOrLoad({
             namespace: "tenant",
             key: `search:${hashCacheKey(tenantSearchDTO)}`,
-            ttlSeconds: TENANT_TTL_SECONDS,
             loader: async () => {
                 const result = await this.searchTenantsData(request, tenantSearchDTO, response);
                 return response.headersSent ? null : result;

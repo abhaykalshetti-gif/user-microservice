@@ -31,9 +31,6 @@ import { check } from "prettier";
 import { CacheService } from "../cache/cache.service";
 import { hashCacheKey } from "../cache/cache-key.util";
 
-const UFIELDS_TTL_SECONDS = 3600; // ufields:{userId}, 1 h
-const USERFILTER_TTL_SECONDS = 300; // userfilter, 5 min
-const FIELDSDEF_TTL_SECONDS = 3600; // fields:{tenantId}, 1 h
 
 @Injectable()
 export class FieldsService {
@@ -61,7 +58,6 @@ export class FieldsService {
       namespace: "fields:global",
       key: `formFields:${requiredData?.context || "none"}:${requiredData?.contextType || "none"}`,
       dependsOn: ["fieldsdef"],
-      ttlSeconds: FIELDSDEF_TTL_SECONDS,
       loader: async () => {
         const result = await this.getFormCustomFieldData(requiredData, response);
         return response.headersSent ? null : result;
@@ -832,7 +828,6 @@ export class FieldsService {
       namespace: `fields:${tenantId ?? "global"}`,
       key: `search:${hashCacheKey(fieldsSearchDto)}`,
       dependsOn: ["fieldsdef"],
-      ttlSeconds: FIELDSDEF_TTL_SECONDS,
       loader: async () => {
         const result = await this.searchFieldsData(tenantId, request, fieldsSearchDto, response);
         return response.headersSent ? null : result;
@@ -1274,7 +1269,6 @@ export class FieldsService {
       namespace: "fields:global",
       key: `options:${hashCacheKey(fieldsOptionsSearchDto)}`,
       dependsOn: ["fieldsdef"],
-      ttlSeconds: FIELDSDEF_TTL_SECONDS,
       loader: async () => {
         const result = await this.getFieldOptionsData(fieldsOptionsSearchDto, response);
         return response.headersSent ? null : result;
@@ -1664,7 +1658,6 @@ export class FieldsService {
     return this.cacheService.getOrLoad<string[]>({
       namespace: "userfilter",
       key: `${context}:${hashCacheKey(stateDistBlockData)}`,
-      ttlSeconds: USERFILTER_TTL_SECONDS,
       loader: () => this.filterUserUsingCustomFieldsUncached(context, stateDistBlockData),
     });
   }
@@ -2058,7 +2051,6 @@ export class FieldsService {
         ids: itemIds,
         namespaceFor: (id) => `${nsPrefix}:${id}`,
         dependsOn: ["fieldsdef"],
-        ttlSeconds: UFIELDS_TTL_SECONDS,
         loader: async (missingIds) => {
           const fetched = await this.fetchBulkCustomFieldDetails(missingIds, tableName);
           return new Map(Object.entries(fetched));

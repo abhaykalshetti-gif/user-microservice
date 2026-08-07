@@ -12,7 +12,6 @@ import { API_RESPONSES } from "@utils/response.messages";
 import { ConfigService } from "@nestjs/config";
 import { CacheService } from "../cache/cache.service";
 
-const FORM_TTL_SECONDS = 3600; // form:{tenantId}, 1 h
 
 @Injectable()
 export class FormsService {
@@ -31,8 +30,8 @@ export class FormsService {
       namespace: `form:${requiredData?.tenantId ?? "global"}`,
       key: `read:${requiredData?.context || "none"}:${requiredData?.contextType || "none"}`,
       dependsOn: ["fieldsdef"],
-      ttlSeconds: FORM_TTL_SECONDS,
       loader: async () => {
+        console.log("Caching hitting");
         const result = await this.getFormPayload(requiredData, response);
         return response.headersSent ? null : result;
       },

@@ -30,7 +30,6 @@ import { Console } from "console";
 import { CacheService } from "../cache/cache.service";
 import { hashCacheKey } from "../cache/cache-key.util";
 
-const COHORT_TTL_SECONDS = 300; // cohort:{tenantId}, 5 min
 import { getAuditContext } from "@utils/audit-helper";
 
 @Injectable()
@@ -107,7 +106,6 @@ export class CohortService {
           namespace: `cohort:${tenantId}`,
           key: `read:${requiredData.cohortId}:child:cf${requiredData.customField ? 1 : 0}`,
           dependsOn: ["fieldsdef"],
-          ttlSeconds: COHORT_TTL_SECONDS,
           loader: () => this.buildChildData(cohorts, requiredData),
         });
         return APIResponse.success(res, apiId, payload, HttpStatus.OK, API_RESPONSES.COHORT_HIERARCHY);
@@ -116,7 +114,6 @@ export class CohortService {
           namespace: `cohort:${tenantId}`,
           key: `read:${requiredData.cohortId}:nochild`,
           dependsOn: ["fieldsdef"],
-          ttlSeconds: COHORT_TTL_SECONDS,
           loader: () => this.buildCohortData(cohorts),
         });
         return APIResponse.success(res, apiId, payload, HttpStatus.OK, API_RESPONSES.COHORT_LIST);
@@ -876,7 +873,6 @@ export class CohortService {
       namespace: `cohort:${tenantId}`,
       key: `search:${hashCacheKey({ academicYearId, cohortSearchDto })}`,
       dependsOn: ["fieldsdef"],
-      ttlSeconds: COHORT_TTL_SECONDS,
       loader: async () => {
         const result = await this.searchCohortData(tenantId, academicYearId, cohortSearchDto, response);
         return response.headersSent ? null : result;
@@ -1372,7 +1368,6 @@ export class CohortService {
           namespace: `cohort:${requiredData.tenantId}`,
           key: `mycohorts:${requiredData.userId}:child${requiredData.getChildData ? 1 : 0}:cf${requiredData.customField ? 1 : 0}`,
           dependsOn: [`cohortmember:${requiredData.tenantId}`, "fieldsdef"],
-          ttlSeconds: COHORT_TTL_SECONDS,
           loader: () => this.buildMyCohortsData(requiredData),
         });
         if (payload === null || payload === undefined) {

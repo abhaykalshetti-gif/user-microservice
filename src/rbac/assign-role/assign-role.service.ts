@@ -188,7 +188,6 @@ export class AssignRoleService {
       const result = await this.cacheService.getOrLoad({
         namespace: `userroles:${userId}`,
         key: "role",
-        ttlSeconds: 600,
         loader: () => this.checkExistingRole(userId),
       });
       if (!result) {

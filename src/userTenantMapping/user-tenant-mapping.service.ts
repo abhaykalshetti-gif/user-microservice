@@ -334,7 +334,6 @@ export class UserTenantMappingService {
       const mappings = await this.cacheService.getOrLoad<any[]>({
         namespace: `usertenant:${userId}`,
         key: `mappings:${includeArchived ? "all" : "active"}`,
-        ttlSeconds: 600,
         loader: () => this.userTenantMappingRepository.query(query, [userId]),
       });
 

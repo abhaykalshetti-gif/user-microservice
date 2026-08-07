@@ -28,7 +28,6 @@ import { KafkaService } from "src/kafka/kafka.service";
 import { CacheService } from "../cache/cache.service";
 import { hashCacheKey } from "../cache/cache-key.util";
 
-const COHORTMEMBER_TTL_SECONDS = 180; // cohortmember:{tenantId}, 3 min
 import { BulkCohortMember } from "src/cohortMembers/dto/bulkMember-create.dto";
 import { getAuditContext } from "@utils/audit-helper";
 
@@ -79,7 +78,6 @@ export class CohortMembersService {
       namespace: `cohortmember:${tenantId}`,
       key: `read:${cohortId}:${academicYearId}:cf${(fieldvalue || "").toLowerCase() === "true" ? 1 : 0}`,
       dependsOn: ["fieldsdef", `userlist:${tenantId}`],
-      ttlSeconds: COHORTMEMBER_TTL_SECONDS,
       loader: async () => {
         const result = await this.getCohortMembersData(cohortId, tenantId, fieldvalue, academicYearId, res);
         return res.headersSent ? null : result;
@@ -296,7 +294,6 @@ ON CM."userId" = U."userId" ${whereCase}`;
       namespace: `cohortmember:${tenantId}`,
       key: `list:${hashCacheKey({ cohortMembersSearchDto, academicyearId })}`,
       dependsOn: ["fieldsdef", `userlist:${tenantId}`],
-      ttlSeconds: COHORTMEMBER_TTL_SECONDS,
       loader: async () => {
         const result = await this.searchCohortMembersData(cohortMembersSearchDto, tenantId, academicyearId, res);
         return res.headersSent ? null : result;

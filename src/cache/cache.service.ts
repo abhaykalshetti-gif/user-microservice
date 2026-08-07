@@ -11,7 +11,8 @@ export interface GetOrLoadOptions<T> {
   key: string;
   /** Other namespaces this read joins; their versions are embedded in the cache key too (§1.3 rule 3). */
   dependsOn?: string[];
-  ttlSeconds: number;
+  /** Optional override. Omit to use the family's TTL from CacheConfig.ttl. */
+  ttlSeconds?: number;
   loader: () => Promise<T>;
 }
 
@@ -22,7 +23,8 @@ export interface BulkGetOrLoadOptions<T> {
   /** Sub-key within the per-id namespace. Defaults to a constant, since narrow namespaces usually hold one record. */
   keyFor?: (id: string) => string;
   dependsOn?: string[];
-  ttlSeconds: number;
+  /** Optional override. Omit to use each id's namespace family TTL from CacheConfig.ttl. */
+  ttlSeconds?: number;
   loader: (missingIds: string[]) => Promise<Map<string, T>>;
 }
 
@@ -48,7 +50,8 @@ export class CacheService {
    * null/undefined/false/empty results (§1.3 rule 5 — no negative caching).
    */
   async getOrLoad<T>(options: GetOrLoadOptions<T>): Promise<T> {
-    const { namespace, key, dependsOn = [], ttlSeconds, loader } = options;
+    const { namespace, key, dependsOn = [], loader } = options;
+    const ttlSeconds = this.resolveTtlSeconds(namespace, options.ttlSeconds);
 
     if (!this.isNamespaceCacheable(namespace)) {
       // Disabled master switch or CACHE_DISABLED_NAMESPACES — not counted as
@@ -91,7 +94,7 @@ export class CacheService {
    * entries. Two Redis round-trips regardless of N.
    */
   async bulkGetOrLoad<T>(options: BulkGetOrLoadOptions<T>): Promise<Map<string, T>> {
-    const { ids, namespaceFor, keyFor = () => "data", dependsOn = [], ttlSeconds, loader } = options;
+    const { ids, namespaceFor, keyFor = () => "data", dependsOn = [], loader } = options;
     const result = new Map<string, T>();
     if (ids.length === 0) return result;
 
@@ -150,7 +153,8 @@ export class CacheService {
           if (!entryKey) continue; // id's namespace wasn't cacheable to begin with
           const value = loaded.get(id);
           if (this.isCacheable(value)) {
-            toSet.push({ key: entryKey, value: value as T, ttl: ttlSeconds });
+            const ttl = this.resolveTtlSeconds(namespaceFor(id), options.ttlSeconds);
+            toSet.push({ key: entryKey, value: value as T, ttl });
           }
         }
         if (toSet.length > 0) {
@@ -209,6 +213,18 @@ export class CacheService {
   /** §1.6 snapshot of per-namespace counters (also surfaced by /health). */
   getMetricsSnapshot() {
     return this.metrics.snapshot();
+  }
+
+  /**
+   * TTL (seconds) for a read. An explicit per-call override wins; otherwise
+   * the value comes from CacheConfig.ttl keyed by namespace family, falling
+   * back to `ttl.default`. This is the single source of truth for TTLs —
+   * services no longer hardcode them.
+   */
+  private resolveTtlSeconds(namespace: string, explicit?: number): number {
+    if (explicit !== undefined) return explicit;
+    const family = namespace.split(":")[0];
+    return this.config.ttl[family] ?? this.config.ttl.default;
   }
 
   private isNamespaceCacheable(namespace: string): boolean {

@@ -66,8 +66,6 @@ interface UpdateField {
   username?: string; // Optional
   email?: string; // Optional
 }
-const USERLIST_TTL_SECONDS = 180; // userlist:{tenantId}, 3 min
-const USER_CORE_TTL_SECONDS = 900; // GET /read/:userId, 15 min
 
 @Injectable()
 export class UserService {
@@ -808,7 +806,6 @@ export class UserService {
     return this.cacheService.getOrLoad({
       namespace: `userlist:${tenantId}`,
       key: hashCacheKey({ userSearchDto, includeCustomFields }),
-      ttlSeconds: USERLIST_TTL_SECONDS,
       loader: () => this.findAllUserDetailsUncached(userSearchDto, tenantId, includeCustomFields),
     });
   }
@@ -1058,7 +1055,6 @@ export class UserService {
       namespace: `user:${userData.userId}`,
       key: `core:${userData?.tenantId ?? "no-tenant"}`,
       dependsOn: [`ufields:${userData.userId}`],
-      ttlSeconds: USER_CORE_TTL_SECONDS,
       // findUserDetails returns `false` when the user doesn't exist. The pair
       // would still be a non-empty array, so return null instead to keep the
       // "not found" out of the cache.

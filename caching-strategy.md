@@ -131,12 +131,15 @@ single-process dev.
 declared as `dependsOn` by every read whose output embeds field definitions, so
 one INCR makes all of them stale at once.
 
-TTL constants live next to their consumers: `USER_CORE_TTL_SECONDS`,
-`USERLIST_TTL_SECONDS` ([user.service.ts](src/user/user.service.ts)),
-`UFIELDS_TTL_SECONDS`, `USERFILTER_TTL_SECONDS`, `FIELDSDEF_TTL_SECONDS`
-([fields.service.ts](src/fields/fields.service.ts)), `COHORT_TTL_SECONDS`,
-`COHORTMEMBER_TTL_SECONDS`, `TENANT_TTL_SECONDS`, `FORM_TTL_SECONDS`.
-`usertenant` and `userroles` use an inline `600` rather than a named constant.
+TTLs are **centralised** in [cache.config.ts](src/cache/cache.config.ts)
+(`CacheConfig.ttl`), keyed by namespace family, with a `default` fallback.
+Services no longer hardcode a TTL — `CacheService.getOrLoad` resolves it from
+config by the read's namespace family. Every family is overridable via
+`CACHE_TTL_<FAMILY>` (e.g. `CACHE_TTL_USERLIST=180`); a per-call `ttlSeconds`
+option still wins if ever passed. Built-in defaults (seconds): `user` 900,
+`userlist` 180, `userfilter` 300, `ufields`/`cfields` 3600, `usertenant` 600,
+`userroles` 600, `cohort` 300, `cohortmember` 180, `fields` 3600, `form` 3600,
+`tenant` 3600, `default` 300.
 
 ### 2.1 Namespaces by module — disable reference
 
