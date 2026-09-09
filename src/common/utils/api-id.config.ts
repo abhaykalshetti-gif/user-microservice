@@ -65,5 +65,9 @@ export const APIID = {
   SIGNED_URL: 'api.get.signedURL',
   SSO_AUTHENTICATE: 'api.sso.authenticate',
   CRON_NAVAPATHAM_ASSIGN: 'api.cron.navapatham.assign',
-  CRON_PRAGYANPATH_MAP_USERS: 'api.cron.pragyanpath.mapUsers'
+  CRON_PRAGYANPATH_MAP_USERS: 'api.cron.pragyanpath.mapUsers',
+  PLACEMENT_PROPERTY_CREATE: "api.placementProperty.create",
+  PLACEMENT_PROPERTY_UPDATE: "api.placementProperty.update",
+  PLACEMENT_PROPERTY_STATUS_UPDATE: "api.placementProperty.statusUpdate",
+  PLACEMENT_PROPERTY_SEARCH: "api.placementProperty.search",
 };

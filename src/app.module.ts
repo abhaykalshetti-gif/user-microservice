@@ -34,6 +34,7 @@ import kafkaConfig from "./kafka/kafka.config";
 import { HealthController } from "./health.controller";
 import { CronModule } from "./cron/cron.module";
 import { CacheModule } from "./cache/cache.module";
+import { PlacementPropertyModule } from "./placementProperty/placementProperty.module";
 import { RequestContextMiddleware } from "./common/middleware/request-context.middleware";
 
 @Module({
@@ -69,6 +70,7 @@ import { RequestContextMiddleware } from "./common/middleware/request-context.mi
     SsoModule,
     CronModule,
     CacheModule,
+    PlacementPropertyModule,
   ],
   controllers: [AppController, HealthController],
   providers: [AppService, HttpService],

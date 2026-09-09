@@ -256,6 +256,15 @@ export const API_RESPONSES = {
   ERROR_FAILED_FETCH_CUSTOM_FIELDS: "Failed to fetch custom fields for Kafka event",
   ERROR_FAILED_PUBLISH_USER_TENANT_EVENT: (eventType) =>
     `Failed to publish user-tenant ${eventType} event to Kafka`,
-  ERROR_GET_USER_TENANT_MAPPINGS: "Error retrieving user tenant mappings"
+  ERROR_GET_USER_TENANT_MAPPINGS: "Error retrieving user tenant mappings",
+  PLACEMENT_PROPERTY_CREATED_SUCCESSFULLY: "Placement Property created successfully",
+  PLACEMENT_PROPERTY_UPDATED_SUCCESSFULLY: "Placement Property updated successfully",
+  PLACEMENT_PROPERTY_STATUS_UPDATED_SUCCESSFULLY: "Placement Property status updated successfully",
+  PLACEMENT_PROPERTY_LIST_SUCCESSFULLY: "Placement Property list fetched successfully",
+  PLACEMENT_PROPERTY_NOT_FOUND: "Placement Property not found",
+  STATE_NOT_FOUND: "State not found",
+  DISTRICT_NOT_FOUND: "District not found",
+  DISTRICT_STATE_MISMATCH: "Selected District does not belong to the selected State",
+  ONLY_CENTRAL_ADMIN_ALLOWED: "Only Central Admin can perform this action",
 };
 
