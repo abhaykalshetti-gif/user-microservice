@@ -18,13 +18,11 @@ export class CreatePlacementPropertyDto {
   @ApiProperty({ type: String, description: "State Id" })
   @Expose()
   @IsNotEmpty({ message: "State Id is required" })
-  @IsUUID(undefined, { message: "State Id must be a valid UUID" })
   stateId: string;
 
   @ApiProperty({ type: String, description: "District Id" })
   @Expose()
   @IsNotEmpty({ message: "District Id is required" })
-  @IsUUID(undefined, { message: "District Id must be a valid UUID" })
   districtId: string;
 
   @ApiProperty({ type: String, description: "Pincode of the property" })

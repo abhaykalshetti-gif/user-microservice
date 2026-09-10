@@ -1,8 +1,8 @@
-import { Expose, Type } from "class-transformer";
+import { Expose, Transform, Type } from "class-transformer";
 import {
   IsOptional,
   IsString,
-  IsUUID,
+  IsArray,
   IsEnum,
   IsInt,
   Min,
@@ -10,18 +10,36 @@ import {
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { PlacementPropertyStatus } from "./placement-property-status-update.dto";
 
-export class SearchPlacementPropertyDto {
-  @ApiPropertyOptional({ type: String, description: "State Id" })
-  @Expose()
-  @IsOptional()
-  @IsUUID(undefined, { message: "State Id must be a valid UUID" })
-  stateId?: string;
+// Accepts either a single value or an array in the request body and normalizes to an array,
+// matching the array + In() filter convention cohort search uses for parentId/status/cohortId.
+const toArray = ({ value }) => {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value.length === 0 ? undefined : value;
+  return [value];
+};
 
-  @ApiPropertyOptional({ type: String, description: "District Id" })
+export class SearchPlacementPropertyDto {
+  @ApiPropertyOptional({
+    type: [String],
+    description: "State Id(s)",
+  })
   @Expose()
   @IsOptional()
-  @IsUUID(undefined, { message: "District Id must be a valid UUID" })
-  districtId?: string;
+  @Transform(toArray)
+  @IsArray()
+  @IsString({ each: true })
+  stateId?: string[];
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: "District Id(s)",
+  })
+  @Expose()
+  @IsOptional()
+  @Transform(toArray)
+  @IsArray()
+  @IsString({ each: true })
+  districtId?: string[];
 
   @ApiPropertyOptional({ type: String, description: "Pincode" })
   @Expose()

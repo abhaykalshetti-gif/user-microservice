@@ -262,9 +262,5 @@ export const API_RESPONSES = {
   PLACEMENT_PROPERTY_STATUS_UPDATED_SUCCESSFULLY: "Placement Property status updated successfully",
   PLACEMENT_PROPERTY_LIST_SUCCESSFULLY: "Placement Property list fetched successfully",
   PLACEMENT_PROPERTY_NOT_FOUND: "Placement Property not found",
-  STATE_NOT_FOUND: "State not found",
-  DISTRICT_NOT_FOUND: "District not found",
-  DISTRICT_STATE_MISMATCH: "Selected District does not belong to the selected State",
-  ONLY_CENTRAL_ADMIN_ALLOWED: "Only Central Admin can perform this action",
 };
 

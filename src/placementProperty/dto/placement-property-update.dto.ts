@@ -25,13 +25,13 @@ export class UpdatePlacementPropertyDto {
   @ApiPropertyOptional({ type: String, description: "State Id" })
   @Expose()
   @IsOptional()
-  @IsUUID(undefined, { message: "State Id must be a valid UUID" })
+  @IsNotEmpty({ message: "State Id cannot be empty" })
   stateId?: string;
 
   @ApiPropertyOptional({ type: String, description: "District Id" })
   @Expose()
   @IsOptional()
-  @IsUUID(undefined, { message: "District Id must be a valid UUID" })
+  @IsNotEmpty({ message: "District Id cannot be empty" })
   districtId?: string;
 
   @ApiPropertyOptional({ type: String, description: "Pincode of the property" })

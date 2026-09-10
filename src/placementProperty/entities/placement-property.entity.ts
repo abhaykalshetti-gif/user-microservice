@@ -11,19 +11,19 @@ export class PlacementProperty {
   @PrimaryGeneratedColumn("uuid")
   placementPropertyId: string;
 
-  @Column()
+  @Column({ type: "varchar", length: 255, nullable: false })
   propertyName: string;
 
   @Column()
   propertyContact: string;
 
-  @Column()
+  @Column({type: "varchar", length: 255, nullable: true})
   propertyEmail: string;
 
-  @Column("uuid")
+  @Column({ type: "varchar", length: 255, nullable: false })
   stateId: string;
 
-  @Column("uuid")
+  @Column({ type: "varchar", length: 255, nullable: false })
   districtId: string;
 
   @Column()
